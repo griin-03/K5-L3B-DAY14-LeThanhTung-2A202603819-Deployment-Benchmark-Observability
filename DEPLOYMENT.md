@@ -7,15 +7,14 @@
 ---
 
 ## 1. Public URL
-- **Production URL:** `https://day14-agent-production.up.railway.app` *(hoặc `https://day14-agent-production.onrender.com`)*
+- **Production URL:** `https://k5-l3b-day14-lethanhtung-2a202603819.onrender.com`
 - **Local Container Tested Port:** `http://localhost:8000`
 
 ---
 
 ## 2. Platform & Deployment Specs
-- **Platform:** Railway / Render (Web Service Dockerfile native build)
+- **Platform:** Render (Web Service Dockerfile native build, Region: Singapore)
 - **Container Architecture:** Multi-stage `python:3.11-slim`, non-root user `appuser`
-- **Attached Addon:** Redis 7 Cloud Instance (Private Network URL)
 
 ---
 
@@ -23,60 +22,52 @@
 
 ### 3.1. Liveness Probe (`GET /health`)
 ```bash
-curl -i https://day14-agent-production.up.railway.app/health
+curl -i https://k5-l3b-day14-lethanhtung-2a202603819.onrender.com/health
 ```
-**Expected Response:** `HTTP/1.1 200 OK`
+**Actual Response:** `HTTP/2 200 OK`
 ```json
 {
-  "status": "ok",
-  "environment": "production"
+  "status": "ok"
 }
 ```
 
 ### 3.2. Readiness Probe (`GET /ready`)
 ```bash
-curl -i https://day14-agent-production.up.railway.app/ready
+curl -i https://k5-l3b-day14-lethanhtung-2a202603819.onrender.com/ready
 ```
-**Expected Response:** `HTTP/1.1 200 OK`
+**Actual Response:** `HTTP/2 503 Service Unavailable` *(chưa gắn REDIS_URL)* hoặc `200 OK` *(khi có Redis)*:
 ```json
 {
-  "status": "ready",
-  "redis": "connected",
-  "environment": "production"
+  "status": "not ready",
+  "redis": false
 }
 ```
 
 ### 3.3. Unauthenticated API Test (Missing Key)
 ```bash
-curl -i -X POST https://day14-agent-production.up.railway.app/ask \
+curl -i -X POST https://k5-l3b-day14-lethanhtung-2a202603819.onrender.com/ask \
   -H "Content-Type: application/json" \
   -d '{"question": "Docker container là gì?"}'
 ```
-**Expected Response:** `HTTP/1.1 401 Unauthorized`
+**Actual Response:** `HTTP/2 401 Unauthorized`
 ```json
 {
-  "detail": "Missing X-API-Key header"
+  "detail": "Missing or invalid API key. Include header: X-API-Key: <your-key>"
 }
 ```
 
 ### 3.4. Authenticated API Test (Valid Key)
 ```bash
-curl -i -X POST https://day14-agent-production.up.railway.app/ask \
+curl -i -X POST https://k5-l3b-day14-lethanhtung-2a202603819.onrender.com/ask \
   -H "X-API-Key: day14-secret-key" \
   -H "Content-Type: application/json" \
   -d '{"question": "Docker container là gì?"}'
 ```
-**Expected Response:** `HTTP/1.1 200 OK`
+**Actual Response:** `HTTP/2 200 OK`
 ```json
 {
-  "answer": "Mock LLM response for: Docker container là gì?",
-  "model": "mock-llm-small",
-  "usage": {
-    "prompt_tokens": 12,
-    "completion_tokens": 45,
-    "total_tokens": 57,
-    "cost_usd": 0.000085
-  }
+  "question": "Docker container là gì?",
+  "answer": "Container là cách đóng gói app để chạy ở mọi nơi. Build once, run anywhere!"
 }
 ```
 

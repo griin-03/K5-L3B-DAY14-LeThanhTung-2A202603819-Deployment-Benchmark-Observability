@@ -53,8 +53,28 @@ Thực nghiệm đo đạc thực tế từ quá trình build `my-agent:develop`
 ## Part 3: Cloud Deployment
 
 ### Exercise 3.1: Railway / Render deployment
-- **Cấu hình deploy:** Đã cấu hình tệp `railway.toml` và `render.yaml` hỗ trợ build Dockerfile, tự động inject cổng `${PORT}` và trỏ endpoint kiểm tra sức khỏe tại `/health`.
-- **Thông tin chi tiết và hướng dẫn test:** Đã mô tả đầy đủ trong tệp `DEPLOYMENT.md`.
+- **Live URL:** `https://k5-l3b-day14-lethanhtung-2a202603819.onrender.com`
+- **Kết quả kiểm thử thực tế trên Cloud (Render):**
+  1. `GET /health` ➜ `HTTP/2 200 OK`
+     ```json
+     {"status":"ok"}
+     ```
+  2. `POST /ask` (không có key) ➜ `HTTP/2 401 Unauthorized`
+     ```json
+     {"detail":"Missing or invalid API key. Include header: X-API-Key: <your-key>"}
+     ```
+  3. `POST /ask` (có header `X-API-Key: day14-secret-key`) ➜ `HTTP/2 200 OK`
+     ```json
+     {"question":"Docker container là gì?","answer":"Container là cách đóng gói app để chạy ở mọi nơi. Build once, run anywhere!"}
+     ```
+- **So sánh `railway.toml` vs `render.yaml`:**
+  - `railway.toml`: File cấu hình nhẹ tập trung vào build pipeline (`[build] builder = "DOCKERFILE"`), khai báo đường dẫn kiểm tra sức khỏe `healthcheckPath = "/health"` và timeout. Railway tự động phát hiện port từ Dockerfile EXPOSE.
+  - `render.yaml`: File dạng Infrastructure-as-Code (Blueprint) định nghĩa cụ thể tài nguyên theo cụm service (`type: web`, `env: docker`), cho phép khai báo chi tiết danh sách biến môi trường (`envVars`), thiết lập tự động sinh giá trị bí mật (`generateValue: true`) hoặc đồng bộ thủ công (`sync: false`) để bảo vệ an toàn secret.
+- **Exercise 3.3 — Pipeline CI/CD Cloud Run:**
+  - Qua `cloudbuild.yaml` và `service.yaml`: Pipeline gồm 3 bước chính:
+    1. Build Docker image từ Dockerfile và gán tag theo commit SHA (`gcr.io/$PROJECT_ID/agent:$COMMIT_SHA`).
+    2. Push container image đã build lên Google Artifact Registry / Container Registry.
+    3. Triển khai image lên Cloud Run qua lệnh `gcloud run services replace service.yaml`, Cloud Run tự động cấp phát URL HTTPS và quản lý auto-scaling từ 0 đến N instance.
 
 ---
 
